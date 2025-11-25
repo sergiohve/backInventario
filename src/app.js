@@ -6,11 +6,9 @@ const app = express();
 app.set("port", process.env.PORT || 4000);
 app.set("host", process.env.HOST || '0.0.0.0');
 
-
 //middlewires
 app.use(cors())
 app.use(express.json())
-
 
 //rutas para nuestras apis
 app.use("/api/usuarios", require("./routes/usuario"))
@@ -24,5 +22,7 @@ app.use("/api/ventas", require("./routes/venta"))
 app.use("/api/estado", require("./routes/estado"))
 app.use("/api/deudores", require("./routes/deudor"))
 app.use("/api/cierreventas", require("./routes/cierreventa"))
+app.use("/api/clientes", require("./routes/cliente"))
+app.use("/api/examenes", require("./routes/examen"));
 
 module.exports = app;

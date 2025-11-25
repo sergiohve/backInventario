@@ -5,6 +5,7 @@ const Caja = require("../models/Caja");
 //Traer todos los modulos
 cajasCtrl.getcajas = async (req, res) => {
   const cajas = await Caja.find();
+  
   res.json(cajas);
 };
 
