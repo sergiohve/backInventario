@@ -12,7 +12,7 @@ const examenSchema = new Schema({
   },
   area: {
     type: String,
-    required: true
+     default: '' 
   },
   resultados: {
     type: Object,

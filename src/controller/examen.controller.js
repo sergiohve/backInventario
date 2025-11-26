@@ -18,6 +18,7 @@ examenCtrl.getExamenes = async (req, res) => {
 }
 
 // Crear un nuevo examen
+// controllers/examen.controller.js
 examenCtrl.createExamen = async (req, res) => {
   try {
     const { cliente, tipoExamen, area, resultados, observaciones, fechaExamen, estado } = req.body;
@@ -35,10 +36,15 @@ examenCtrl.createExamen = async (req, res) => {
       return res.status(404).json({ message: "Cliente no encontrado" });
     }
 
+    // Validar campos requeridos
+    if (!tipoExamen || tipoExamen.trim() === '') {
+      return res.status(400).json({ message: "El tipo de examen es requerido" });
+    }
+
     const newExamen = new Examen({
       cliente,
-      tipoExamen,
-      area,
+      tipoExamen: tipoExamen.trim(),
+      area: area && area.trim() !== '' ? area.trim() : 'General', // Valor por defecto si está vacío
       resultados: resultados || {},
       observaciones: observaciones || '',
       fechaExamen: fechaExamen || Date.now(),
@@ -59,6 +65,16 @@ examenCtrl.createExamen = async (req, res) => {
     
   } catch (error) {
     console.error('Error detallado al crear examen:', error);
+    
+    // Manejar error de validación de Mongoose
+    if (error.name === 'ValidationError') {
+      const errors = Object.values(error.errors).map(err => err.message);
+      return res.status(400).json({ 
+        message: "Error de validación", 
+        errors 
+      });
+    }
+    
     res.status(500).json({ 
       message: "Error al crear el examen", 
       error: error.message,
