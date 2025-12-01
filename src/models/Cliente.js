@@ -22,6 +22,11 @@ const clienteSchema = new Schema({
     required: true,
     enum: ['Masculino', 'Femenino', 'Otro']
   },
+  direccion: {
+    type: String,
+    required: true,
+    trim: true
+  },
   fecha: {
     type: Date,
     default: Date.now

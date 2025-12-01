@@ -15,8 +15,13 @@ clienteCtrl.getClientes = async (req, res) => {
 // Crear un nuevo cliente
 clienteCtrl.createCliente = async (req, res) => {
   try {
-    const { nombre, cedula, edad, sexo, fecha } = req.body;
+    const { nombre, cedula, edad, sexo, direccion, fecha } = req.body;
     
+    // Validar campos requeridos
+    if (!nombre || !cedula || !edad || !sexo || !direccion) {
+      return res.status(400).json({ message: "Todos los campos son requeridos" });
+    }
+
     // Verificar si ya existe un cliente con esa cédula
     const clienteExistente = await Cliente.findOne({ cedula });
     if (clienteExistente) {
@@ -28,6 +33,7 @@ clienteCtrl.createCliente = async (req, res) => {
       cedula,
       edad,
       sexo,
+      direccion,
       fecha: fecha || Date.now()
     });
     
@@ -66,8 +72,12 @@ clienteCtrl.deleteCliente = async (req, res) => {
 
 clienteCtrl.updateCliente = async (req, res) => {
   try {
-    const { nombre, cedula, edad, sexo, fecha } = req.body;
+    const { nombre, cedula, edad, sexo, direccion, fecha } = req.body;
     
+    // Validar campos requeridos
+    if (!nombre || !cedula || !edad || !sexo || !direccion) {
+      return res.status(400).json({ message: "Todos los campos son requeridos" });
+    }
    
     if (cedula) {
       const clienteConCedula = await Cliente.findOne({ cedula, _id: { $ne: req.params.id } });
@@ -83,6 +93,7 @@ clienteCtrl.updateCliente = async (req, res) => {
         cedula,
         edad,
         sexo,
+        direccion,
         fecha
       },
       { new: true, runValidators: true }
