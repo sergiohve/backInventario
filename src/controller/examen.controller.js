@@ -3,17 +3,40 @@ const examenCtrl = {};
 const Examen = require("../models/Examen");
 const Cliente = require("../models/Cliente");
 
-// Traer todos los exámenes
+// Traer todos los exámenes (paginado + búsqueda)
 examenCtrl.getExamenes = async (req, res) => {
   try {
-    const examenes = await Examen.find().populate('cliente').sort({ createdAt: -1 });
-    res.json(examenes);
+    const { page, limit, search, estado } = req.query;
+    const pageNum = parseInt(page) || 1;
+    const limitNum = parseInt(limit) || 10;
+    const skip = (pageNum - 1) * limitNum;
+
+    let matchQuery = {};
+    if (estado) matchQuery.estado = estado;
+
+    if (search) {
+      const searchRegex = new RegExp(search, 'i');
+      const matchingClientes = await Cliente.find({
+        $or: [{ nombre: searchRegex }, { cedula: searchRegex }]
+      }).select('_id');
+      const clienteIds = matchingClientes.map(c => c._id);
+
+      matchQuery.$or = [
+        { cliente: { $in: clienteIds } },
+        { tipoExamen: searchRegex },
+        { area: searchRegex }
+      ];
+    }
+
+    const [examenes, total] = await Promise.all([
+      Examen.find(matchQuery).populate('cliente').sort({ createdAt: -1 }).skip(skip).limit(limitNum),
+      Examen.countDocuments(matchQuery)
+    ]);
+
+    res.json({ data: examenes, total, page: pageNum, totalPages: Math.ceil(total / limitNum) });
   } catch (error) {
     console.error('Error al obtener exámenes:', error);
-    res.status(500).json({ 
-      message: "Error al obtener los exámenes", 
-      error: error.message 
-    });
+    res.status(500).json({ message: "Error al obtener los exámenes", error: error.message });
   }
 }
 

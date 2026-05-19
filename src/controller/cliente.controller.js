@@ -2,13 +2,63 @@ const clienteCtrl = {};
 
 const Cliente = require("../models/Cliente");
 
-// Traer todos los clientes
+// Traer todos los clientes (paginado)
 clienteCtrl.getClientes = async (req, res) => {
   try {
-    const clientes = await Cliente.find().sort({ createdAt: -1 });
-    res.json(clientes);
+    const { page, limit, search, all } = req.query;
+
+    const query = search
+      ? { $or: [
+          { nombre: { $regex: search, $options: 'i' } },
+          { cedula: { $regex: search, $options: 'i' } }
+        ]}
+      : {};
+
+    if (all === 'true') {
+      const clientes = await Cliente.find(query).sort({ createdAt: -1 });
+      return res.json({ data: clientes, total: clientes.length });
+    }
+
+    const pageNum = parseInt(page) || 1;
+    const limitNum = parseInt(limit) || 10;
+    const skip = (pageNum - 1) * limitNum;
+
+    const [clientes, total] = await Promise.all([
+      Cliente.find(query).sort({ createdAt: -1 }).skip(skip).limit(limitNum),
+      Cliente.countDocuments(query)
+    ]);
+
+    res.json({ data: clientes, total, page: pageNum, totalPages: Math.ceil(total / limitNum) });
   } catch (error) {
     res.status(500).json({ message: "Error al obtener los clientes", error: error.message });
+  }
+}
+
+// Estadísticas de clientes (timezone Venezuela UTC-4)
+clienteCtrl.getClientesStats = async (req, res) => {
+  try {
+    const nowUTC = new Date();
+    const venezuelaTime = new Date(nowUTC.getTime() - 4 * 60 * 60 * 1000);
+
+    const startOfDayUTC = new Date(Date.UTC(
+      venezuelaTime.getUTCFullYear(), venezuelaTime.getUTCMonth(), venezuelaTime.getUTCDate(),
+      4, 0, 0, 0
+    ));
+    const endOfDayUTC = new Date(startOfDayUTC.getTime() + 24 * 60 * 60 * 1000);
+    const startOfMonthUTC = new Date(Date.UTC(
+      venezuelaTime.getUTCFullYear(), venezuelaTime.getUTCMonth(), 1,
+      4, 0, 0, 0
+    ));
+
+    const [total, nuevosHoy, registrosMes] = await Promise.all([
+      Cliente.countDocuments(),
+      Cliente.countDocuments({ fecha: { $gte: startOfDayUTC, $lt: endOfDayUTC } }),
+      Cliente.countDocuments({ fecha: { $gte: startOfMonthUTC } })
+    ]);
+
+    res.json({ totalClientes: total, nuevosHoy, clientesActivos: total, registrosMes });
+  } catch (error) {
+    res.status(500).json({ message: "Error al obtener estadísticas", error: error.message });
   }
 }
 

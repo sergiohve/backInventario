@@ -7,7 +7,10 @@ const {
   deleteCliente,
   getCliente,
   updateCliente,
+  getClientesStats,
 } = require("../controller/cliente.controller");
+
+router.route("/stats").get(getClientesStats);
 
 router.route("/")
   .get(getClientes)
