@@ -12,6 +12,22 @@ router.get("/", async (req, res) => {
   }
 });
 
+// POST upsert por nombre (guardar/actualizar plantilla)
+router.post("/", async (req, res) => {
+  try {
+    const { nombre, area, campos } = req.body;
+    if (!nombre) return res.status(400).json({ message: "nombre requerido" });
+    const tipo = await TipoExamen.findOneAndUpdate(
+      { nombre },
+      { area: area || nombre, campos: campos || [] },
+      { upsert: true, new: true }
+    );
+    res.json(tipo);
+  } catch (error) {
+    res.status(500).json({ message: "Error al guardar plantilla", error: error.message });
+  }
+});
+
 // DELETE por id
 router.delete("/:id", async (req, res) => {
   try {
