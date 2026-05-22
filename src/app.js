@@ -23,6 +23,7 @@ app.use("/api/estado", require("./routes/estado"))
 app.use("/api/deudores", require("./routes/deudor"))
 app.use("/api/cierreventas", require("./routes/cierreventa"))
 app.use("/api/clientes", require("./routes/cliente"))
-app.use("/api/examenes", require("./routes/examen"));
+app.use("/api/examenes", require("./routes/examen"))
+app.use("/api/tipos-examen", require("./routes/tipoExamen"));
 
 module.exports = app;

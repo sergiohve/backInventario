@@ -2,6 +2,7 @@ const examenCtrl = {};
 
 const Examen = require("../models/Examen");
 const Cliente = require("../models/Cliente");
+const TipoExamen = require("../models/TipoExamen");
 
 // Traer todos los exámenes (paginado + búsqueda)
 examenCtrl.getExamenes = async (req, res) => {
@@ -77,7 +78,20 @@ examenCtrl.createExamen = async (req, res) => {
     console.log('Examen a guardar:', newExamen);
     
     await newExamen.save();
-    
+
+    // Guardar/actualizar plantilla custom para cada tipo individual
+    const tipos = tipoExamen.split(" + ").map(t => t.trim()).filter(Boolean);
+    for (const tipo of tipos) {
+      const camposDeTipo = Object.entries(resultados || {})
+        .filter(([, d]) => tipos.length === 1 || d.tipoExamen === tipo)
+        .map(([nombre, d]) => ({ nombre, valorReferencia: d.valorReferencia || '' }));
+      await TipoExamen.findOneAndUpdate(
+        { nombre: tipo },
+        { area: area || tipo, campos: camposDeTipo },
+        { upsert: true }
+      );
+    }
+
     // Populate el cliente antes de enviar la respuesta
     await newExamen.populate('cliente');
     
@@ -210,21 +224,11 @@ examenCtrl.deleteExamen = async (req, res) => {
   }
 }
 
-// Obtener plantillas de tipos de examen (uno por tipo, para el dropdown)
+// Obtener plantillas custom desde colección TipoExamen
 examenCtrl.getPlantillasCustom = async (req, res) => {
   try {
-    const plantillas = await Examen.aggregate([
-      { $sort: { createdAt: -1 } },
-      {
-        $group: {
-          _id: '$tipoExamen',
-          resultados: { $first: '$resultados' },
-          area: { $first: '$area' },
-        }
-      },
-      { $project: { _id: 0, tipoExamen: '$_id', resultados: 1, area: 1 } }
-    ]);
-    res.json(plantillas);
+    const tipos = await TipoExamen.find().sort({ nombre: 1 });
+    res.json(tipos);
   } catch (error) {
     console.error('Error al obtener plantillas:', error);
     res.status(500).json({ message: 'Error al obtener plantillas', error: error.message });
