@@ -210,6 +210,27 @@ examenCtrl.deleteExamen = async (req, res) => {
   }
 }
 
+// Obtener plantillas de tipos de examen (uno por tipo, para el dropdown)
+examenCtrl.getPlantillasCustom = async (req, res) => {
+  try {
+    const plantillas = await Examen.aggregate([
+      { $sort: { createdAt: -1 } },
+      {
+        $group: {
+          _id: '$tipoExamen',
+          resultados: { $first: '$resultados' },
+          area: { $first: '$area' },
+        }
+      },
+      { $project: { _id: 0, tipoExamen: '$_id', resultados: 1, area: 1 } }
+    ]);
+    res.json(plantillas);
+  } catch (error) {
+    console.error('Error al obtener plantillas:', error);
+    res.status(500).json({ message: 'Error al obtener plantillas', error: error.message });
+  }
+}
+
 // Traer exámenes por cliente
 examenCtrl.getExamenesByCliente = async (req, res) => {
   try {

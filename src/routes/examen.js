@@ -8,12 +8,15 @@ const {
   getExamen,
   updateExamen,
   getExamenesByCliente,
-  updateEstadoExamen
+  updateEstadoExamen,
+  getPlantillasCustom
 } = require("../controller/examen.controller");
 
 router.route("/")
   .get(getExamenes)
   .post(createExamen);
+
+router.route("/plantillas").get(getPlantillasCustom);
 
 router.route("/:id")
   .get(getExamen)
